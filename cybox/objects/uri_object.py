@@ -23,6 +23,9 @@ class URI(ObjectProperties):
         self.value = value
         self.type_ = type_
 
+    def __str__(self):
+        return str(self.value)
+
     # Properties
     @property
     def value(self):
