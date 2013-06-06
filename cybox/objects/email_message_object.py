@@ -21,30 +21,16 @@ class Attachments(cybox.ReferenceList):
     _binding = email_message_binding
     _binding_class = email_message_binding.AttachmentsType
     _contained_type = AttachmentReference
+    _list_name = 'File'
     _namespace = 'http://cybox.mitre.org/objects#EmailMessageObject-2'
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_File(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_File()
 
 
 class Links(cybox.ReferenceList):
     _binding = email_message_binding
     _binding_class = email_message_binding.LinksType
     _contained_type = LinkReference
+    _list_name = 'Link'
     _namespace = 'http://cybox.mitre.org/objects#EmailMessageObject-2'
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Link(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Link()
 
 
 class EmailRecipients(cybox.EntityList):
