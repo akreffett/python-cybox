@@ -283,7 +283,11 @@ class EntityList(collections.MutableSequence, Entity):
             list_obj = self._binding_class()
         else:
             list_obj = object_type
-        self._set_list(list_obj, tmp_list)
+
+        if hasattr(self, '_list_name'):
+            setattr(list_obj, '_list_name', tmp_list)
+        else:
+            self._set_list(list_obj, tmp_list)
 
         return list_obj
 
@@ -300,7 +304,12 @@ class EntityList(collections.MutableSequence, Entity):
         else:
             list_ = list_class
 
-        for item in cls._get_list(list_obj):
+        if hasattr(list_obj, '_list_name'):
+            tmp_list = getattr(list_obj, '_list_name')
+        else:
+            tmp_list = cls._get_list(list_obj)
+
+        for item in tmp_list:
             list_.append(cls._contained_type.from_obj(item))
 
         return list_

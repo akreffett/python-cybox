@@ -118,14 +118,7 @@ class ReceivedLine(cybox.Entity):
 class ReceivedLineList(cybox.EntityList):
     _contained_type = ReceivedLine
     _binding_class = email_message_binding.EmailReceivedLineListType
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Received(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Received()
+    _list_name = "Received"
 
 
 class EmailHeader(cybox.Entity):
