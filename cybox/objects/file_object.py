@@ -3,6 +3,7 @@
 
 import cybox
 import cybox.bindings.file_object as file_binding
+from cybox.common.extracted_features import ExtractedFeatures
 from cybox.common import (DateTime, HashList, HexBinary, ObjectProperties,
         String, UnsignedLong)
 #from cybox.common.byterun import ByteRuns
@@ -81,6 +82,7 @@ class File(ObjectProperties):
 
         self.is_packed = None
         self.hashes = None
+        self.extracted_features = None
 
         # Not supported yet:
         # - Digital_Signatures
@@ -168,6 +170,8 @@ class File(ObjectProperties):
             file_obj.set_File_Format(self.file_format.to_obj())
         if self.hashes:
             file_obj.set_Hashes(self.hashes.to_obj())
+        if self.extracted_features is not None:
+            file_obj.set_Extracted_Features(self.extracted_features.to_obj())
         if self.modified_time is not None:
             file_obj.set_Modified_Time(self.modified_time.to_obj())
         if self.accessed_time is not None:
@@ -201,6 +205,8 @@ class File(ObjectProperties):
             file_dict['file_format'] = self.file_format.to_dict()
         if self.hashes:
             file_dict['hashes'] = self.hashes.to_list()
+        if self.extracted_features is not None:
+            file_dict['extracted_features'] = self.extracted_features.to_dict()
         if self.modified_time is not None:
             file_dict['modified_time'] = self.modified_time.to_dict()
         if self.accessed_time is not None:
@@ -230,6 +236,7 @@ class File(ObjectProperties):
         file_.magic_number = HexBinary.from_obj(file_obj.get_Magic_Number())
         file_.file_format = String.from_obj(file_obj.get_File_Format())
         file_.hashes = HashList.from_obj(file_obj.get_Hashes())
+        file_.extracted_features = ExtractedFeatures.from_obj(file_obj.get_Extracted_Features())
         #TODO: why are there two Strings and one DateTime here?
         file_.modified_time = String.from_obj(file_obj.get_Modified_Time())
         file_.accessed_time = String.from_obj(file_obj.get_Accessed_Time())
@@ -257,6 +264,7 @@ class File(ObjectProperties):
         file_.magic_number = HexBinary.from_dict(file_dict.get('magic_number'))
         file_.file_format = String.from_dict(file_dict.get('file_format'))
         file_.hashes = HashList.from_list(file_dict.get('hashes'))
+        file_.extracted_features = ExtractedFeatures.from_dict(file_dict.get('extracted_features'))
         file_.modified_time = String.from_dict(file_dict.get('modified_time'))
         file_.accessed_time = String.from_dict(file_dict.get('accessed_time'))
         file_.created_time = DateTime.from_dict(file_dict.get('created_time'))

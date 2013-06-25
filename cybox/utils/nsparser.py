@@ -3,6 +3,10 @@
 
 import itertools
 
+import cybox
+
+__all__ = ['Namespace', 'NamespaceParser', 'META', 'UnknownObjectType']
+
 
 class UnknownObjectType(Exception):
     pass
@@ -16,13 +20,15 @@ class Namespace(object):
     schema.
     """
 
-    def __init__(self, name, prefix, schema_location):
+    def __init__(self, name, prefix, schema_location=''):
         """Create a new namespace.
 
         Arguments:
         - name: the full namespace (a URI)
         - prefix: a shortened prefix for the URL (used in the xmlns)
         - schema_location: a URL to locate the schema for this namespace
+
+        schema_location is optional and defaults to an empty string.
         """
         self.name = name
         self.prefix = prefix
@@ -120,9 +126,9 @@ class Metadata(object):
 # This is loaded by the Metadata class and should not be accessed directly.
 NS_LIST = [
     ('http://www.w3.org/2001/XMLSchema-instance', 'xsi', ''),
-    ('http://cybox.mitre.org/cybox-2', 'cybox', 'http,//cybox.mitre.org/XMLSchema/core/2.0/cybox_core.xsd'),
-    ('http://cybox.mitre.org/common-2', 'cyboxCommon', 'http,//cybox.mitre.org/XMLSchema/common/2.0/cybox_common.xsd'),
-    ('http://cybox.mitre.org/default_vocabularies-2', 'cyboxVocabs', 'http,//cybox.mitre.org/XMLSchema/default_vocabularies/2.0.0/cybox_default_vocabularies.xsd'),
+    ('http://cybox.mitre.org/cybox-2', 'cybox', 'http://cybox.mitre.org/XMLSchema/core/2.0/cybox_core.xsd'),
+    ('http://cybox.mitre.org/common-2', 'cyboxCommon', 'http://cybox.mitre.org/XMLSchema/common/2.0/cybox_common.xsd'),
+    ('http://cybox.mitre.org/default_vocabularies-2', 'cyboxVocabs', 'http://cybox.mitre.org/XMLSchema/default_vocabularies/2.0.0/cybox_default_vocabularies.xsd'),
     ('http://cybox.mitre.org/objects#AccountObject-2', 'AccountObj', 'http://cybox.mitre.org/XMLSchema/objects/Account/2.0/Account_Object.xsd'),
     ('http://cybox.mitre.org/objects#AddressObject-2', 'AddressObj', 'http://cybox.mitre.org/XMLSchema/objects/Address/2.0/Address_Object.xsd'),
     ('http://cybox.mitre.org/objects#APIObject-2', 'APIObj', 'http://cybox.mitre.org/XMLSchema/objects/API/2.0/API_Object.xsd'),
@@ -158,7 +164,7 @@ NS_LIST = [
     ('http://cybox.mitre.org/objects#PortObject-2', 'PortObj', 'http://cybox.mitre.org/XMLSchema/objects/Port/2.0/Port_Object.xsd'),
     ('http://cybox.mitre.org/objects#ProcessObject-2', 'ProcessObj', 'http://cybox.mitre.org/XMLSchema/objects/Process/2.0/Process_Object.xsd'),
     ('http://cybox.mitre.org/objects#SemaphoreObject-2', 'SemaphoreObj', 'http://cybox.mitre.org/XMLSchema/objects/Semaphore/2.0/Semaphore_Object.xsd'),
-    ('http://cybox.mitre.org/objects#SocketAddressObject-1', 'SocketAddressObj', 'http://cybox.mitre.org/XMLSchema/objects/Socket_Address/1.0/Socket_Address_Object.xsd'),
+    ('http://cybox.mitre.org/objects#SocketAddressObject-1', 'SocketAddressObj', 'http://cybox.mitre.org/XMLSchema/objects/Socket_Address/2.0/Socket_Address_Object.xsd'),
     ('http://cybox.mitre.org/objects#SystemObject-2', 'SystemObj', 'http://cybox.mitre.org/XMLSchema/objects/System/2.0/System_Object.xsd'),
     ('http://cybox.mitre.org/objects#UnixFileObject-2', 'UnixFileObj', 'http://cybox.mitre.org/XMLSchema/objects/Unix_File/2.0/Unix_File_Object.xsd'),
     ('http://cybox.mitre.org/objects#UnixNetworkRouteEntryObject-2', 'UnixNetworkRouteEntryObj', 'http://cybox.mitre.org/XMLSchema/objects/Unix_Network_Route_Entry/2.0/Unix_Network_Route_Entry_Object.xsd'),
@@ -280,7 +286,7 @@ OBJ_LIST = [
     ('WindowsUserAccountObjectType', None, 'win_user_account_object', 'http://cybox.mitre.org/objects#WinUserAccountObject-2', ['UserAccountObjectType', 'AccountObjectType']),
     ('WindowsVolumeObjectType', None, 'win_volume_object', 'http://cybox.mitre.org/objects#WinVolumeObject-2', ['VolumeObjectType']),
     ('WindowsWaitableTimerObjectType', None, 'win_waitable_timer_object', 'http://cybox.mitre.org/objects#WinWaitableTimerObject-2', ['WindowsHandleObjectType']),
-    ('X509CertificateObjectType', None, 'x509_certificate_object', 'http://cybox.mitre.org/objects#X509CertificateObject-2', []),
+    ('X509CertificateObjectType', 'cybox.objects.x509_certificate_object.X509Certificate', 'x509_certificate_object', 'http://cybox.mitre.org/objects#X509CertificateObject-2', []),
 ]
 
 
@@ -332,6 +338,12 @@ class NamespaceParser(object):
                 xsi_type = object_properties.get_xsi_type()
                 self.get_defined_object_namespace(xsi_type)
 
+        if object.get_Related_Objects() is not None:
+            related_objects = object.get_Related_Objects()
+
+            for rel_obj in related_objects.get_Related_Object():
+                self.get_namespace_from_object(rel_obj)
+
         if object.get_Discovery_Method() is not None:
             discovery_method = object.get_Discovery_Method()
 
@@ -366,8 +378,15 @@ class NamespaceParser(object):
 
             #Add any dependencies
             for dependency in object_type.dependencies:
-                if dependency not in self.object_types and dependency not in self.object_type_dependencies:
-                    self.object_type_dependencies.append(dependency)
+                self.add_object_dependency(dependency)
+
+    def add_object_dependency(self, object_dependency):
+        if object_dependency not in self.object_types and object_dependency not in self.object_type_dependencies:
+            self.object_type_dependencies.append(object_dependency)
+            o = META.lookup_object(object_dependency)
+            #Add recursive dependencies as needed
+            for dependency in o.dependencies:
+                self.add_object_dependency(dependency)
 
     def build_namespaces_schemalocations_str(self):
         '''Build the namespace/schemalocation declaration string'''
@@ -378,7 +397,13 @@ class NamespaceParser(object):
         output_string += 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \n '
         output_string += 'xmlns:cybox="http://cybox.mitre.org/cybox-2" \n '
         output_string += 'xmlns:cyboxCommon="http://cybox.mitre.org/common-2" \n '
+        output_string += 'xmlns:cyboxVocabs="http://cybox.mitre.org/default_vocabularies-2" \n '
+
+        idns = cybox.utils.idgen._get_generator().namespace
+        output_string += 'xmlns:%s="%s" \n ' % (idns.prefix, idns.name)
+
         schemalocs.append('http://cybox.mitre.org/cybox-2 http://cybox.mitre.org/XMLSchema/core/2.0/cybox_core.xsd')
+        schemalocs.append(' http://cybox.mitre.org/default_vocabularies-2 http://cybox.mitre.org/XMLSchema/default_vocabularies/2.0.0/cybox_default_vocabularies.xsd')
 
         for object_type in self.object_types:
             namespace = META.lookup_object(object_type).namespace
@@ -391,9 +416,7 @@ class NamespaceParser(object):
             if object_type_dependency not in self.object_types:
                 namespace = META.lookup_object(object_type_dependency).namespace
                 ns = META.lookup_namespace(namespace)
-
                 output_string += ('xmlns:' + ns.prefix + '=' + '"' + namespace + '"' + ' \n ')
-                schemalocs.append(' ' + namespace + ' ' + ns.schema_location)
 
         output_string += 'xsi:schemaLocation="'
 

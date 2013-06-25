@@ -6,7 +6,9 @@ import unittest
 
 from cybox import TypedField
 import cybox.bindings.cybox_core as core_binding
+from cybox.core import Observables
 import cybox.utils
+
 
 
 def assert_equal_ignore(item1, item2, ignore_keys=None):
@@ -82,7 +84,10 @@ def round_trip(o, output=False, list_=False):
     xobj = o2.to_obj()
 
     # 6. Bindings Object -> XML String
-    xml_string = o2.to_xml(include_namespaces=True)
+    # TODO: Hack for now to not include namespaces on Observables (they are
+    # calculated already)
+    include_ns = (type(o) is not Observables)
+    xml_string = o2.to_xml(include_namespaces=include_ns)
 
     if output:
         print(xml_string)

@@ -597,7 +597,7 @@ except ImportError, exp:
 # Globals
 #
 
-ExternalEncoding = 'ascii'
+ExternalEncoding = 'utf-8'
 Tag_pattern_ = re_.compile(r'({.*})?(.*)')
 String_cleanup_pat_ = re_.compile(r"[\n\r\s]+")
 Namespace_extract_pat_ = re_.compile(r'{(.*)}(.*)')
@@ -619,7 +619,7 @@ def quote_xml(inStr):
     s1 = s1.replace('&', '&amp;')
     s1 = s1.replace('<', '&lt;')
     s1 = s1.replace('>', '&gt;')
-    return s1
+    return unicode(s1).encode(ExternalEncoding)
 
 def quote_attrib(inStr):
     s1 = (isinstance(inStr, basestring) and inStr or
@@ -634,7 +634,7 @@ def quote_attrib(inStr):
             s1 = "'%s'" % s1
     else:
         s1 = '"%s"' % s1
-    return s1
+    return unicode(s1).encode(ExternalEncoding)
 
 def quote_python(inStr):
     s1 = inStr
@@ -880,12 +880,15 @@ class ObservablesType(GeneratedsSuper):
         else:
             eol_ = ''
         showIndent(outfile, level, pretty_print)
+        #First, find all of the objects used and get their namespaces
+        namespace_parser = NamespaceParser(self.get_Observable())
         #Build and set the namespace declarations so that we generate valid CybOX XML
-        if namespacedef_ == None or namespacedef_ == '':
-            #First, find all of the objects used and get their namespaces
-            namespace_parser = NamespaceParser(self.get_Observable())
+        if namespacedef_ == None:
             #Create the namespace string and set the namespacedef to it
             namespacedef_ = namespace_parser.build_namespaces_schemalocations_str() # was self.__build_namespaces_schemalocations()
+        else:
+            #Create the namespace string and set the namespacedef to it
+            namespacedef_ = namespacedef_ + namespace_parser.build_namespaces_schemalocations_str() # was self.__build_namespaces_schemalocations()
 
         outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
@@ -1738,7 +1741,7 @@ class ActionType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, already_processed, namespace_='cybox:', name_='ActionType'):
         if self.timestamp is not None and 'timestamp' not in already_processed:
             already_processed.add('timestamp')
-            outfile.write(' timestamp="%s"' % self.gds_format_datetime(self.timestamp, input_name='timestamp'))
+            outfile.write(' timestamp="%s"' % self.timestamp)
         if self.action_status is not None and 'action_status' not in already_processed:
             already_processed.add('action_status')
             outfile.write(' action_status=%s' % (quote_attrib(self.action_status), ))

@@ -1,7 +1,7 @@
 # Copyright (c) 2013, The MITRE Corporation. All rights reserved.
 # See LICENSE.txt for complete terms.
 
-__version__ = "2.0.0b2"
+__version__ = "2.0.0b4"
 
 import collections
 import json
@@ -150,11 +150,15 @@ class Entity(object):
 
         return entity
 
-    def to_xml(self, include_namespaces=False):
+    def to_xml(self, include_namespaces=False, namespace_def_list=None):
         """Export an object as an XML String"""
 
         if include_namespaces:
             namespace_def = self._get_namespace_def()
+        elif namespace_def_list is not None:
+            namespace_def = ""
+            for namespace_def_entry in namespace_def_list:
+                namespace_def += ("\n " + namespace_def_entry)
         else:
             namespace_def = ""
 
