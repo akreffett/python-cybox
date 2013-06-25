@@ -8,8 +8,9 @@ import cybox.utils
 class ObjectProperties(cybox.Entity):
     """The Cybox ObjectProperties base class."""
 
+    object_reference = cybox.TypedField("object_reference")
+
     def __init__(self):
-        self.object_reference = None
         self.parent = None
 
     @property
@@ -28,31 +29,45 @@ class ObjectProperties(cybox.Entity):
         self.parent.add_related(related, relationship, inline)
 
     def to_obj(self, partial_obj=None):
-        """Populate an existing bindings object.
+        # TODO: Hack until all ObjectProperties use TypedField
+        if partial_obj is None:
+            return super(ObjectProperties, self).to_obj()
 
-        Note that this is different than to_obj() on most other CybOX types.
-        """
-        if not partial_obj:
-            raise NotImplementedError()
-
-        partial_obj.set_xsi_type("%s:%s" % (self._XSI_NS, self._XSI_TYPE))
         if self.object_reference is not None:
             partial_obj.set_object_reference(self.object_reference)
+        self._finalize_obj(partial_obj)
+
+    def _finalize_obj(self, partial_obj=None):
+        """Add xsi_type to the binding object."""
+
+        partial_obj.set_xsi_type("%s:%s" % (self._XSI_NS, self._XSI_TYPE))
 
     def to_dict(self, partial_dict=None):
-        """Populate an existing dictionary.
-
-        Note that this is different than to_dict() on most other CybOX types.
-        """
+        # TODO: Hack until all ObjectProperties use TypedField
         if partial_dict is None:
-            raise NotImplementedError()
+            return super(ObjectProperties, self).to_dict()
 
-        partial_dict['xsi:type'] = self._XSI_TYPE
         if self.object_reference is not None:
             partial_dict['object_reference'] = self.object_reference
+        self._finalize_dict(partial_dict)
 
-    @staticmethod
-    def from_obj(defobj_obj, defobj=None):
+    def _finalize_dict(self, partial_dict=None):
+        """Add xsi:type to the dictionary."""
+
+        partial_dict['xsi:type'] = self._XSI_TYPE
+
+    @classmethod
+    def from_obj(cls, defobj_obj, defobj=None):
+        # This is a bit of a hack. If this is being called directly on the
+        # ObjectProperties class, then we don't know the xsi_type of the
+        # ObjectProperties, so we need to look it up. Otherwise, if this is
+        # being called on a particular subclass of ObjectProperties (for
+        # example, Address), we can skip directly to the cybox.Entity
+        # implementation.
+        if cls is not ObjectProperties:
+            print super(ObjectProperties, cls())
+            return super(ObjectProperties, cls()).from_obj(defobj_obj)
+
         if not defobj_obj:
             return None
 
@@ -70,8 +85,13 @@ class ObjectProperties(cybox.Entity):
 
         return defobj
 
-    @staticmethod
-    def from_dict(defobj_dict, defobj=None):
+    @classmethod
+    def from_dict(cls, defobj_dict, defobj=None):
+        # Also a hack. See comment on from_obj
+        if cls is not ObjectProperties:
+            print super(ObjectProperties, cls())
+            return super(ObjectProperties, cls()).from_dict(defobj_dict)
+
         if not defobj_dict:
             return None
 
@@ -86,4 +106,3 @@ class ObjectProperties(cybox.Entity):
         defobj.object_reference = defobj_dict.get('object_reference')
 
         return defobj
-
