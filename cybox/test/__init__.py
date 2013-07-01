@@ -84,10 +84,7 @@ def round_trip(o, output=False, list_=False):
     xobj = o2.to_obj()
 
     # 6. Bindings Object -> XML String
-    # TODO: Hack for now to not include namespaces on Observables (they are
-    # calculated already)
-    include_ns = (type(o) is not Observables)
-    xml_string = o2.to_xml(include_namespaces=include_ns)
+    xml_string = o2.to_xml()
 
     if output:
         print(xml_string)
@@ -135,4 +132,3 @@ class TestTypedField(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

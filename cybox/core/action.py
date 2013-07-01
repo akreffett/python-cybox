@@ -8,7 +8,10 @@ from cybox.common import VocabString, StructuredText, MeasureSource
 from cybox.core.associated_object import AssociatedObject
 from cybox.core.action_reference import ActionReference
 
+
 class Action(cybox.Entity):
+    _namespace = 'http://cybox.mitre.org/cybox-2'
+
     def __init__(self):
         self.id = None
         self.idref = None
@@ -119,7 +122,10 @@ class Action(cybox.Entity):
             action_.action_aliases = action_obj.get_Action_Aliases().get_Action_Alias()
         return action_
 
+
 class ActionArgument(cybox.Entity):
+    _namespace = 'http://cybox.mitre.org/cybox-2'
+
     def __init__(self):
         super(ActionArgument, self).__init__()
         self.argument_name = None
@@ -155,37 +161,23 @@ class ActionArgument(cybox.Entity):
         action_argument_.argument_value = action_argument_obj.get_Argument_Value()
         return action_argument_
 
+
 class ActionArguments(cybox.EntityList):
-    _contained_type = ActionArgument
     _binding_class = core_binding.ActionArgumentsType
+    _binding_var = "Action_Argument"
+    _contained_type = ActionArgument
+    _namespace = 'http://cybox.mitre.org/cybox-2'
 
-    def __init__(self):
-        super(ActionArguments, self).__init__()
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Action_Argument(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Action_Argument()
 
 class AssociatedObjects(cybox.EntityList):
-    _contained_type = AssociatedObject
     _binding_class = core_binding.AssociatedObjectsType
+    _binding_var = "Associated_Object"
+    _contained_type = AssociatedObject
+    _namespace = 'http://cybox.mitre.org/cybox-2'
 
-    def __init__(self):
-        super(AssociatedObjects, self).__init__()
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Associated_Object(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Associated_Object()
 
 class ActionRelationship(cybox.Entity):
+    _namespace = 'http://cybox.mitre.org/cybox-2'
 
     def __init__(self):
         super(ActionRelationship, self).__init__()
@@ -226,17 +218,9 @@ class ActionRelationship(cybox.Entity):
         action_relationship_.action_references = [ActionReference.from_obj(x) for x in action_relationship_obj.get_Action_Reference()]
         return action_relationship_
 
+
 class ActionRelationships(cybox.EntityList):
-    _contained_type = ActionRelationship
     _binding_class = core_binding.RelationshipsType
-
-    def __init__(self):
-        super(ActionRelationships, self).__init__()
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Relationship(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Relationship()
+    _binding_var = "Relationship"
+    _contained_type = ActionRelationship
+    _namespace = 'http://cybox.mitre.org/cybox-2'

@@ -7,7 +7,7 @@ import collections
 import json
 from StringIO import StringIO
 
-from cybox.utils import NamespaceParser, META
+from cybox.utils import Namespace, NamespaceParser, META
 
 
 def get_xmlns_string(ns_set):
@@ -150,17 +150,26 @@ class Entity(object):
 
         return entity
 
-    def to_xml(self, include_namespaces=False, namespace_def_list=None):
-        """Export an object as an XML String"""
+    def to_xml(self, include_namespaces=True, namespace_dict=None):
+        """
+        Export an object as an XML String.
+
+        Arguments:
+        - `include_namespaces` - A boolean of whether to include xmlns and
+          xsi:schemaLocation attributes on the root element. Set to true
+          by default.
+
+        - `namespace_dict` parameter is a dictionary where keys are XML
+          namespaces and values are prefixes.
+            Example: {'http://example.com': 'example'}
+          These namespaces and prefixes will be added as namespace declarations
+          to the exported XML document string.
+        """
+
+        namespace_def = ""
 
         if include_namespaces:
-            namespace_def = self._get_namespace_def()
-        elif namespace_def_list is not None:
-            namespace_def = ""
-            for namespace_def_entry in namespace_def_list:
-                namespace_def += ("\n " + namespace_def_entry)
-        else:
-            namespace_def = ""
+            namespace_def = self._get_namespace_def(namespace_dict)
 
         s = StringIO()
         self.to_obj().export(s, 0, namespacedef_=namespace_def)
@@ -169,9 +178,14 @@ class Entity(object):
     def to_json(self):
         return json.dumps(self.to_dict())
 
-    def _get_namespace_def(self):
+    def _get_namespace_def(self, additional_ns_dict=None):
         # copy necessary namespaces
+
         namespaces = self._get_namespaces()
+
+        if additional_ns_dict:
+            for ns, prefix in additional_ns_dict.iteritems():
+                namespaces.update([Namespace(ns, prefix)])
 
         # if there are any other namepaces, include xsi for "schemaLocation"
         if namespaces:
@@ -187,11 +201,9 @@ class Entity(object):
     def _get_namespaces(self, recurse=True):
         ns = set()
 
-        try:
-            ns.update([META.lookup_namespace(self._namespace)])
-        # TODO: Remove this 'except' once every class has defined a _namespace
-        except AttributeError:
-            pass
+        # If this raises an AttributeError, it's because the object doesn't
+        # have a "_namespace" element. All subclasses should define this.
+        ns.update([META.lookup_namespace(self._namespace)])
 
         #In case of recursive relationships, don't process this item twice
         self.touched = True
@@ -284,43 +296,19 @@ class EntityList(collections.MutableSequence, Entity):
                 (value, type(value), self.__class__))
         return new_value
 
-    @staticmethod
-    def _set_list(binding_object, list_):
-        """Call the proper method on the binding object to set its value.
-
-        In general, these should be of the form:
-            binding_object.set_<something>(list_)
-
-        Since <something> differs fromt class to class, this cannot be done
-        generically.
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    def _get_list(binding_object):
-        """Call the proper method on the binding object to get its value.
-
-        In general, these should be of the form:
-            return binding_object.get_<something>()
-
-        Since <something> differs fromt class to class, this cannot be done
-        generically.
-        """
-        raise NotImplementedError
-
     # The next four functions can be overridden, but otherwise define the
-    # default behavior, for EntityList subclasses which define _contained_type,
-    # _binding_class, _get_list, and _set_list
+    # default behavior for EntityList subclasses which define the following
+    # class-level members:
+    # - _binding_class
+    # - _binding_var
+    # - _contained_type
 
     def to_obj(self):
         tmp_list = [x.to_obj() for x in self]
 
         list_obj = self._binding_class()
 
-        if hasattr(self, '_list_name'):
-            setattr(list_obj, self._list_name, tmp_list)
-        else:
-            self._set_list(list_obj, tmp_list)
+        setattr(list_obj, self._binding_var, tmp_list)
 
         return list_obj
 
@@ -334,12 +322,7 @@ class EntityList(collections.MutableSequence, Entity):
 
         list_ = cls()
 
-        if hasattr(list_, '_list_name'):
-            tmp_list = getattr(list_obj, list_._list_name)
-        else:
-            tmp_list = cls._get_list(list_obj)
-
-        for item in tmp_list:
+        for item in getattr(list_obj, cls._binding_var):
             list_.append(cls._contained_type.from_obj(item))
 
         return list_

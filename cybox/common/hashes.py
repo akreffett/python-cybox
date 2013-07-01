@@ -115,7 +115,9 @@ class Hash(cybox.Entity):
 class HashList(cybox.EntityList):
     _binding = common_binding
     _binding_class = common_binding.HashListType
+    _binding_var = "Hash"
     _contained_type = Hash
+    _namespace = 'http://cybox.mitre.org/common-2'
 
     def __init__(self):
         super(HashList, self).__init__()
@@ -161,11 +163,3 @@ class HashList(cybox.EntityList):
             h.simple_hash_value = value
         else:
             self.append(Hash(value, type_))
-
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Hash(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Hash()

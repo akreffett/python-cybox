@@ -7,6 +7,7 @@ from cybox.objects.file_object import File
 from cybox.common import ObjectProperties, Hash, HashList, String, UnsignedLong, HexBinary, DateTime
 
 class WinFile(File):
+    _namespace = 'http://cybox.mitre.org/objects#WinFileObject-2'
     _XSI_NS = "WinFileObj"
     _XSI_TYPE = "WindowsFileObjectType"
 
@@ -79,7 +80,10 @@ class WinFile(File):
         win_file_.stream_list = StreamList.from_list(win_file_dict.get('stream_list'))
         return win_file_
 
+
 class Stream(HashList):
+    _namespace = 'http://cybox.mitre.org/objects#WinFileObject-2'
+
     def __init__(self):
         super(Stream, self).__init__()
         self.name = None
@@ -121,22 +125,9 @@ class Stream(HashList):
         stream_.size_in_bytes = UnsignedLong.from_obj(stream_dict.get('size_in_bytes'))
         return stream_
 
+
 class StreamList(cybox.EntityList):
-    _contained_type = Stream
     _binding_class = win_file_binding.StreamListType
-
-    def __init__(self):
-        super(StreamList, self).__init__()
-       
-    @staticmethod
-    def _set_list(binding_obj, list_):
-        binding_obj.set_Stream(list_)
-
-    @staticmethod
-    def _get_list(binding_obj):
-        return binding_obj.get_Stream()
-
-
-
-
-
+    _binding_var = "Stream"
+    _contained_type = Stream
+    _namespace = 'http://cybox.mitre.org/objects#WinFileObject-2'

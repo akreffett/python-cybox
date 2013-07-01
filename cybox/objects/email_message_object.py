@@ -10,34 +10,37 @@ from cybox.objects.address_object import Address, EmailAddress
 class AttachmentReference(cybox.ObjectReference):
     _binding = email_message_binding
     _binding_class = email_message_binding.AttachmentReferenceType
+    _namespace = "http://cybox.mitre.org/objects#EmailMessageObject-2"
 
 
 class LinkReference(cybox.ObjectReference):
     _binding = email_message_binding
     _binding_class = email_message_binding.LinkReferenceType
+    _namespace = "http://cybox.mitre.org/objects#EmailMessageObject-2"
 
 
 class Attachments(cybox.ReferenceList):
     _binding = email_message_binding
     _binding_class = email_message_binding.AttachmentsType
+    _binding_var = "File"
     _contained_type = AttachmentReference
-    _list_name = 'File'
     _namespace = 'http://cybox.mitre.org/objects#EmailMessageObject-2'
 
 
 class Links(cybox.ReferenceList):
     _binding = email_message_binding
     _binding_class = email_message_binding.LinksType
+    _binding_var = "Link"
     _contained_type = LinkReference
-    _list_name = 'Link'
     _namespace = 'http://cybox.mitre.org/objects#EmailMessageObject-2'
 
 
+#TODO: make this work with new EntityList _binding_var
 class EmailRecipients(cybox.EntityList):
     _binding = email_message_binding
     _binding_class = email_message_binding.EmailRecipientsType
+    _binding_var = 'Recipient'
     _contained_type = EmailAddress
-    _list_name = 'Recipient'
     _namespace = 'http://cybox.mitre.org/objects#EmailMessageObject-2'
 
     def __init__(self, *args):
@@ -52,6 +55,7 @@ class EmailRecipients(cybox.EntityList):
 class ReceivedLine(cybox.Entity):
     _binding = email_message_binding
     _binding_class = email_message_binding.EmailReceivedLineType
+    _namespace = "http://cybox.mitre.org/objects#EmailMessageObject-2"
 
     from_ = cybox.TypedField("From", String)
     by = cybox.TypedField("By", String)
@@ -66,12 +70,14 @@ class ReceivedLine(cybox.Entity):
 
 
 class ReceivedLineList(cybox.EntityList):
-    _contained_type = ReceivedLine
     _binding_class = email_message_binding.EmailReceivedLineListType
-    _list_name = "Received"
+    _binding_var = "Received"
+    _contained_type = ReceivedLine
+    _namespace = "http://cybox.mitre.org/objects#EmailMessageObject-2"
 
 
 class EmailHeader(cybox.Entity):
+    _namespace = "http://cybox.mitre.org/objects#EmailMessageObject-2"
 
     from_ = cybox.TypedField("From", EmailAddress)
     subject = cybox.TypedField("Subject", String)
